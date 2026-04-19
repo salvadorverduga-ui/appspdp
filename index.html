@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPDP Monitor — DaVita Ecuador</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --ink: #0f0f1a;
+      --ink2: #2a2a3e;
+      --accent: #3730a3;
+      --accent2: #059669;
+      --warn: #dc2626;
+      --mid: #d97706;
+      --bg: #f4f4f8;
+      --card: #ffffff;
+      --border: #e2e2ee;
+      --muted: #6b6b8a;
+      --chip-h: #fef3c7;
+      --chip-hc: #92400e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Libre Baskerville', Georgia, serif;
+      background: var(--ink);
+      min-height: 100vh;
+      color: var(--ink);
+    }
+
+    /* ── HEADER ── */
+    #header {
+      background: linear-gradient(135deg, #0f0f1a 0%, #1e1b4b 60%, #0f172a 100%);
+      padding: 32px 32px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    #header::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #fff;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+    .subtitle {
+      color: rgba(255,255,255,0.45);
+      font-size: 12px;
+      letter-spacing: 0.8px;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    /* ── MÉTRICAS ── */
+    .metrics {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .metric {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 14px 20px;
+      min-width: 110px;
+      backdrop-filter: blur(8px);
+    }
+    .metric-val {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .metric-lbl {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+    }
+    .metric.res .metric-val { color: #818cf8; }
+    .metric.con .metric-val { color: #34d399; }
+    .metric.urg .metric-val { color: #f87171; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-top: 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .tab {
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.5);
+      border: none;
+      border-radius: 8px 8px 0 0;
+      padding: 10px 22px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .tab.active {
+      background: var(--bg);
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    /* ── CONTENIDO ── */
+    #content {
+      background: var(--bg);
+      padding: 24px 32px 48px;
+      min-height: 60vh;
+    }
+
+    /* ── BARRA DE FILTROS ── */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filters input,
+    .filters select {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #fff;
+      outline: none;
+      color: var(--ink);
+      transition: border 0.2s;
+    }
+    .filters input { flex: 1; min-width: 200px; }
+    .filters input:focus,
+    .filters select:focus { border-color: var(--accent); }
+
+    #btn-refresh {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    #btn-refresh:hover { opacity: 0.85; }
+    #btn-refresh:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .card:hover { box-shadow: 0 2px 12px rgba(55,48,163,0.08); }
+    .card.open { box-shadow: 0 4px 20px rgba(55,48,163,0.12); }
+
+    .card-res { border-left: 4px solid var(--accent); }
+    .card-con { border-left: 4px solid var(--accent2); }
+    .card-urg-alta { border-left-color: var(--warn); }
+    .card-urg-media { border-left-color: var(--mid); }
+
+    .card-head {
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .card-meta {
+      flex: 1;
+    }
+    .card-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .chip {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      padding: 2px 9px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+    .chip-urg-alta  { background: #fee2e2; color: #991b1b; }
+    .chip-urg-media { background: #fef3c7; color: #92400e; }
+    .chip-urg-baja  { background: #d1fae5; color: #065f46; }
+    .chip-cat { background: #ede9fe; color: #4338ca; }
+    .chip-tema { background: #d1fae5; color: #065f46; }
+    .chip-fecha { background: transparent; color: var(--muted); margin-left: auto; font-size: 10px; }
+
+    .card-titulo {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+
+    .card-arrow {
+      color: #ccc;
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: transform 0.2s;
+    }
+    .card.open .card-arrow { transform: rotate(180deg); }
+
+    .card-body {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 16px 18px;
+      background: #fafafa;
+    }
+    .card.open .card-body { display: block; }
+
+    .resumen-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .resumen-box p { margin-bottom: 4px; }
+    .resumen-box strong { color: var(--ink2); }
+
+    .btn-pdf {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+    }
+    .btn-pdf:hover { opacity: 0.85; }
+
+    /* ── ESTADOS ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      font-style: italic;
+      font-size: 15px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid #ddd;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FOOTER ── */
+    .footer-note {
+      margin-top: 28px;
+      padding: 16px 18px;
+      background: #ede9fe;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #4338ca;
+      font-family: 'DM Mono', monospace;
+      line-height: 1.6;
+    }
+    .footer-note code {
+      background: rgba(0,0,0,0.07);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .demo-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: #d97706;
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 600px) {
+      #header, #content { padding-left: 16px; padding-right: 16px; }
+      h1 { font-size: 22px; }
+      .metric { min-width: 90px; padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     CONFIGURACIÓN — editar estas líneas
+     ══════════════════════════════════════════
+     Para conectar con tu Google Sheet:
+     1. Abre tu Sheet → Archivo → Compartir → Publicar en la web
+     2. Selecciona cada hoja → Formato: CSV → Publicar
+     3. Copia las URLs y pégalas abajo
+-->
+<script>
+const SHEET_ID = "TU_SHEET_ID_AQUI";
+const URLS = {
+  resoluciones: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Resoluciones`,
+  consultas:    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Consultas`,
+};
+</script>
+<!-- ══════════════════════════════════════════ -->
+
+<div id="header">
+  <div class="header-top">
+    <div>
+      <h1>⚖ SPDP Monitor</h1>
+      <p class="subtitle">Superintendencia de Protección de Datos Personales · Ecuador</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span id="demo-badge" class="demo-badge">demo</span>
+      <button id="btn-refresh" onclick="cargarDatos()">⟳ Actualizar</button>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric res">
+      <div class="metric-val" id="cnt-res">—</div>
+      <div class="metric-lbl">Resoluciones</div>
+    </div>
+    <div class="metric con">
+      <div class="metric-val" id="cnt-con">—</div>
+      <div class="metric-lbl">Consultas</div>
+    </div>
+    <div class="metric urg">
+      <div class="metric-val" id="cnt-urg">—</div>
+      <div class="metric-lbl">Urgencia alta</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('resoluciones', this)">📜 Resoluciones</button>
+    <button class="tab" onclick="setTab('consultas', this)">💬 Consultas</button>
+  </div>
+</div>
+
+<div id="content">
+  <div class="filters">
+    <input type="text" id="busqueda" placeholder="🔍 Buscar en título o resumen..." oninput="renderLista()" />
+    <select id="filtro-cat" onchange="renderLista()">
+      <option value="Todas">Todas las categorías</option>
+    </select>
+  </div>
+  <div id="lista"><div class="loading"><span class="spinner"></span>Cargando datos...</div></div>
+  <div class="footer-note" id="footer-note" style="display:none">
+    ⚙ <strong>Para conectar con tu Google Sheet:</strong> abre el archivo HTML, reemplaza
+    <code>TU_SHEET_ID_AQUI</code> con el ID de tu hoja (lo encontrás en la URL de Google Sheets).
+    Luego publicá cada hoja como CSV en <em>Archivo → Compartir → Publicar en la web</em>.
+  </div>
+</div>
+
+<script>
+// ── ESTADO ──────────────────────────────────
+let estado = {
+  tab: "resoluciones",
+  resoluciones: [],
+  consultas: [],
+  expandido: null,
+  demo: true,
+};
+
+// ── DATOS DEMO ───────────────────────────────
+const DEMO_RES = [
+  {
+    id: "a1", titulo: "RESOLUCIÓN N° SPDP-SPD-2026-0005-R — NORMA GENERAL SOBRE EL TRATAMIENTO DE DATOS PERSONALES A GRAN ESCALA",
+    urlPdf: "https://spdp.gob.ec/resoluciones_spdp/",
+    resumen: "**Tipo:** Norma General\n**Tema:** Tratamiento masivo de datos personales\n**Obligaciones clave:**\n- Análisis de riesgo previo obligatorio\n- Designación de DPD obligatoria\n- Registro detallado de actividades de tratamiento\n**Impacto DaVita:** Alto — aplica al tratamiento de datos de pacientes renales en 14 entidades\n**Urgencia:** Alta",
+    categoria: "📗 Normativa", fechaDeteccion: "2026-04-14T10:22:00Z",
+  },
+  {
+    id: "a2", titulo: "RESOLUCIÓN N° SPDP-SPD-2025-0041-R — NORMATIVA PARA LA APLICACIÓN DEL INTERÉS LEGÍTIMO",
+    urlPdf: "https://spdp.gob.ec/resoluciones_spdp/",
+    resumen: "**Tipo:** Normativa General\n**Tema:** Interés legítimo como base de legitimación\n**Obligaciones clave:**\n- Test de ponderación obligatorio y documentado\n- Derecho de oposición reforzado del titular\n**Impacto DaVita:** Medio — revisar bases de legitimación actuales en los procesos de tratamiento\n**Urgencia:** Media",
+    categoria: "📗 Normativa", fechaDeteccion: "2026-03-01T08:00:00Z",
+  },
+  {
+    id: "a3", titulo: "RESOLUCIÓN N° SPDP-SPD-2025-0028-R — REGLAMENTO DEL DELEGADO DE PROTECCIÓN DE DATOS PERSONALES",
+    urlPdf: "https://spdp.gob.ec/resoluciones_spdp/",
+    resumen: "**Tipo:** Reglamento\n**Tema:** Perfil, obligaciones y registro del DPD\n**Obligaciones clave:**\n- Título de tercer nivel requerido (derecho, sistemas o TI)\n- Certificaciones a registrar en plataforma SPDP en 6 meses\n- Independencia funcional garantizada\n**Impacto DaVita:** Crítico — aplica directamente a tu función como DPO\n**Urgencia:** Alta",
+    categoria: "👤 DPD/DPO", fechaDeteccion: "2026-01-10T11:00:00Z",
+  },
+  {
+    id: "a4", titulo: "RESOLUCIÓN N° SPDP-SPD-2025-0006-R — CLÁUSULAS DE PROTECCIÓN DE DATOS EN CONTRATOS",
+    urlPdf: "https://spdp.gob.ec/resoluciones_spdp/",
+    resumen: "**Tipo:** Reglamento contractual\n**Tema:** Obligación de incluir cláusulas de datos en contratos con encargados\n**Obligaciones clave:**\n- Revisión de contratos vigentes con todos los proveedores\n- Cuatro modelos referenciales en Anexo I\n**Impacto DaVita:** Alto — aplica a todos los contratos con encargados del tratamiento\n**Urgencia:** Alta",
+    categoria: "📋 Contratos", fechaDeteccion: "2025-12-05T09:00:00Z",
+  },
+  {
+    id: "a5", titulo: "RESOLUCIÓN N° SPDP-SPD-2025-0034-R — REGLAMENTO DE EVALUACIÓN Y REVISIÓN DE LA LOPDP",
+    urlPdf: "https://spdp.gob.ec/resoluciones_spdp/",
+    resumen: "**Tipo:** Reglamento procedimental interno\n**Tema:** Evaluación periódica de la ley por parte de la SPDP\n**Impacto DaVita:** Bajo en lo inmediato\n**Urgencia:** Baja",
+    categoria: "📜 Reglamento", fechaDeteccion: "2026-02-15T09:30:00Z",
+  },
+];
+
+const DEMO_CON = [
+  {
+    id: "c1", titulo: "Consulta SCVS sobre código dactilar en nombramientos de representantes legales",
+    tema: "Minimización de datos",
+    resumen: "**Pregunta:** ¿Es proporcional exigir código dactilar junto a la cédula en nombramientos?\n**Criterio SPDP:** No. Exigirlo es desproporcionado e infringe los principios de finalidad, pertinencia y minimización. La cédula sola identifica de manera inequívoca.\n**Relevancia DPO salud:** Revisar si algún proceso interno de DaVita exige datos biométricos innecesarios en documentos administrativos.",
+    fechaDeteccion: "2026-04-10T14:00:00Z",
+  },
+  {
+    id: "c2", titulo: "Consulta sobre proceso de reconocimiento por buenas prácticas (Disposición Transitoria 3ª LOPDP)",
+    tema: "General LOPDP",
+    resumen: "**Pregunta:** ¿Cuál es el proceso para acceder al reconocimiento por buenas prácticas?\n**Criterio SPDP:** Se abstiene de pronunciarse — consulta sobre normativa inexistente. La SPDP está en etapa de arranque.\n**Relevancia DPO:** Monitorear cuando se expida la normativa sobre programas de cumplimiento reconocidos.",
+    fechaDeteccion: "2026-03-22T10:30:00Z",
+  },
+];
+
+// ── CSV PARSER ───────────────────────────────
+function parsearCSV(texto) {
+  const lineas = texto.trim().split("\n");
+  if (lineas.length < 2) return [];
+  const headers = lineas[0].split(",").map(h => h.replace(/"/g, "").trim().toLowerCase().replace(/\s+/g, ""));
+  return lineas.slice(1).map(linea => {
+    const vals = [];
+    let cur = "", enComilla = false;
+    for (let c of linea) {
+      if (c === '"') enComilla = !enComilla;
+      else if (c === "," && !enComilla) { vals.push(cur); cur = ""; }
+      else cur += c;
+    }
+    vals.push(cur);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = (vals[i] || "").replace(/"/g, "").trim(); });
+    return obj;
+  });
+}
+
+function normalizarRes(r) {
+  return {
+    id: r.id,
+    titulo: r["título"] || r["titulo"] || r.ttulo || "",
+    urlPdf: r["urlpdf"] || r["url pdf"] || r.urlpdf || "",
+    resumen: r.resumen || "",
+    categoria: r["categoría"] || r["categoria"] || r.categora || "",
+    fechaDeteccion: r["fechadetección"] || r["fechadeteccion"] || r.fechadeteccin || "",
+  };
+}
+
+function normalizarCon(c) {
+  return {
+    id: c.id,
+    titulo: c["título/extracto"] || c["titulo/extracto"] || c["título"] || c.titulo || "",
+    tema: c.tema || "",
+    resumen: c.resumen || "",
+    fechaDeteccion: c["fechadetección"] || c["fechadeteccion"] || c.fechadeteccin || "",
+  };
+}
+
+// ── CARGA DE DATOS ───────────────────────────
+async function cargarDatos() {
+  const btn = document.getElementById("btn-refresh");
+  btn.disabled = true;
+  btn.textContent = "⟳ Cargando...";
+
+  if (SHEET_ID === "TU_SHEET_ID_AQUI") {
+    estado.resoluciones = DEMO_RES;
+    estado.consultas = DEMO_CON;
+    estado.demo = true;
+    actualizarUI();
+    btn.disabled = false;
+    btn.textContent = "⟳ Actualizar";
+    document.getElementById("footer-note").style.display = "block";
+    return;
+  }
+
+  try {
+    const [rRes, rCon] = await Promise.all([fetch(URLS.resoluciones), fetch(URLS.consultas)]);
+    const [csvRes, csvCon] = await Promise.all([rRes.text(), rCon.text()]);
+    const res = parsearCSV(csvRes).map(normalizarRes).filter(r => r.titulo);
+    const con = parsearCSV(csvCon).map(normalizarCon).filter(c => c.titulo);
+    if (res.length > 0) estado.resoluciones = res;
+    if (con.length > 0) estado.consultas = con;
+    estado.demo = false;
+    document.getElementById("demo-badge").style.display = "none";
+    document.getElementById("footer-note").style.display = "none";
+  } catch (e) {
+    console.warn("No se pudo cargar desde Sheets:", e);
+    estado.resoluciones = DEMO_RES;
+    estado.consultas = DEMO_CON;
+    estado.demo = true;
+    document.getElementById("footer-note").style.display = "block";
+  }
+
+  actualizarUI();
+  btn.disabled = false;
+  btn.textContent = "⟳ Actualizar";
+}
+
+// ── LÓGICA DE URGENCIA ───────────────────────
+function urgencia(resumen) {
+  const u = (resumen || "").toLowerCase();
+  if (u.includes("urgencia:** alta") || u.includes("urgencia: alta") || u.includes("urgencia:**alta")) return "alta";
+  if (u.includes("urgencia:** media") || u.includes("urgencia: media")) return "media";
+  return "baja";
+}
+
+// ── RENDER ───────────────────────────────────
+function formatFecha(iso) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" });
+  } catch { return iso.substring(0, 10); }
+}
+
+function renderResumen(texto) {
+  if (!texto) return "<em>Sin resumen</em>";
+  return texto.split("\n").filter(l => l.trim()).map(l => {
+    const html = l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    return `<p>${html}</p>`;
+  }).join("");
+}
+
+function actualizarUI() {
+  // métricas
+  document.getElementById("cnt-res").textContent = estado.resoluciones.length;
+  document.getElementById("cnt-con").textContent = estado.consultas.length;
+  document.getElementById("cnt-urg").textContent = estado.resoluciones.filter(r => urgencia(r.resumen) === "alta").length;
+
+  // categorías en filtro
+  const cats = ["Todas", ...new Set(estado.resoluciones.map(r => r.categoria).filter(Boolean))];
+  const sel = document.getElementById("filtro-cat");
+  const valActual = sel.value;
+  sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join("");
+  if (cats.includes(valActual)) sel.value = valActual;
+
+  // mostrar/ocultar filtro categoría
+  document.getElementById("filtro-cat").style.display = estado.tab === "resoluciones" ? "block" : "none";
+
+  renderLista();
+}
+
+function setTab(tab, btn) {
+  estado.tab = tab;
+  estado.expandido = null;
+  document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("filtro-cat").style.display = tab === "resoluciones" ? "block" : "none";
+  renderLista();
+}
+
+function renderLista() {
+  const q = (document.getElementById("busqueda").value || "").toLowerCase();
+  const cat = document.getElementById("filtro-cat").value || "Todas";
+  const lista = document.getElementById("lista");
+
+  let items = estado.tab === "resoluciones" ? estado.resoluciones : estado.consultas;
+
+  items = items.filter(item => {
+    const matchQ = !q || (item.titulo || "").toLowerCase().includes(q) || (item.resumen || "").toLowerCase().includes(q) || (item.tema || "").toLowerCase().includes(q);
+    const matchC = estado.tab !== "resoluciones" || cat === "Todas" || item.categoria === cat;
+    return matchQ && matchC;
+  });
+
+  if (items.length === 0) {
+    lista.innerHTML = '<div class="empty">Sin resultados para esta búsqueda.</div>';
+    return;
+  }
+
+  lista.innerHTML = items.map(item => {
+    const esRes = estado.tab === "resoluciones";
+    const urg = esRes ? urgencia(item.resumen) : null;
+    const abierto = estado.expandido === item.id;
+
+    const chipUrg = urg ? `<span class="chip chip-urg-${urg}">${urg}</span>` : "";
+    const chipCat = item.categoria ? `<span class="chip chip-cat">${item.categoria}</span>` : "";
+    const chipTema = item.tema ? `<span class="chip chip-tema">${item.tema}</span>` : "";
+    const chipFecha = item.fechaDeteccion ? `<span class="chip chip-fecha">${formatFecha(item.fechaDeteccion)}</span>` : "";
+
+    const claseUrgBorde = esRes ? (urg === "alta" ? "card-urg-alta" : urg === "media" ? "card-urg-media" : "") : "";
+    const claseBase = esRes ? "card-res" : "card-con";
+
+    const btnPdf = (esRes && item.urlPdf) ? `<a href="${item.urlPdf}" target="_blank" class="btn-pdf">📄 Ver resolución completa →</a>` : "";
+
+    return `
+      <div class="card ${claseBase} ${claseUrgBorde} ${abierto ? "open" : ""}" onclick="toggleCard('${item.id}')">
+        <div class="card-head">
+          <div class="card-meta">
+            <div class="card-chips">
+              ${chipUrg}${chipCat}${chipTema}${chipFecha}
+            </div>
+            <div class="card-titulo">${item.titulo}</div>
+          </div>
+          <div class="card-arrow">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="resumen-box">${renderResumen(item.resumen)}</div>
+          ${btnPdf}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function toggleCard(id) {
+  estado.expandido = estado.expandido === id ? null : id;
+  renderLista();
+}
+
+// ── INICIO ───────────────────────────────────
+cargarDatos();
+</script>
+</body>
+</html>
