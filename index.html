@@ -488,23 +488,38 @@ function parsearCSV(texto) {
 }
 
 function normalizarRes(r) {
+  // Normalizar claves: quitar tildes, espacios, mayúsculas
+  const norm = {};
+  Object.keys(r).forEach(k => {
+    const k2 = k.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "");
+    norm[k2] = r[k];
+  });
   return {
-    id: r.id,
-    titulo: r["título"] || r["titulo"] || r.ttulo || "",
-    urlPdf: r["urlpdf"] || r["url pdf"] || r.urlpdf || "",
-    resumen: r.resumen || "",
-    categoria: r["categoría"] || r["categoria"] || r.categora || "",
-    fechaDeteccion: r["fechadetección"] || r["fechadeteccion"] || r.fechadeteccin || "",
+    id: norm.id || "",
+    titulo: norm.titulo || norm.ttulo || "",
+    urlPdf: norm.urlpdf || norm["urlpdf"] || norm["url pdf"] || norm.urlpdf || "",
+    resumen: norm.resumen || "",
+    categoria: norm.categoria || norm.categora || "",
+    fechaDeteccion: norm.fechadeteccion || norm.fechadeteccin || "",
   };
 }
 
 function normalizarCon(c) {
+  const norm = {};
+  Object.keys(c).forEach(k => {
+    const k2 = k.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "");
+    norm[k2] = c[k];
+  });
   return {
-    id: c.id,
-    titulo: c["título/extracto"] || c["titulo/extracto"] || c["título"] || c.titulo || "",
-    tema: c.tema || "",
-    resumen: c.resumen || "",
-    fechaDeteccion: c["fechadetección"] || c["fechadeteccion"] || c.fechadeteccin || "",
+    id: norm.id || "",
+    titulo: norm["titulo/extracto"] || norm.titulo || norm.ttulo || "",
+    tema: norm.tema || "",
+    resumen: norm.resumen || "",
+    fechaDeteccion: norm.fechadeteccion || norm.fechadeteccin || "",
   };
 }
 
