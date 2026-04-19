@@ -352,7 +352,7 @@
      3. Copia las URLs y pégalas abajo
 -->
 <script>
-const SHEET_ID = "TU_SHEET_ID_AQUI";
+const SHEET_ID = "1BANBTsHb_K2pGf7vWoltoWZVHNg592A1zfJpd6GwPyQ";
 const URLS = {
   resoluciones: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Resoluciones`,
   consultas:    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Consultas`,
@@ -403,7 +403,7 @@ const URLS = {
   <div id="lista"><div class="loading"><span class="spinner"></span>Cargando datos...</div></div>
   <div class="footer-note" id="footer-note" style="display:none">
     ⚙ <strong>Para conectar con tu Google Sheet:</strong> abre el archivo HTML, reemplaza
-    <code>TU_SHEET_ID_AQUI</code> con el ID de tu hoja (lo encontrás en la URL de Google Sheets).
+    <code>1BANBTsHb_K2pGf7vWoltoWZVHNg592A1zfJpd6GwPyQ</code> con el ID de tu hoja (lo encontrás en la URL de Google Sheets).
     Luego publicá cada hoja como CSV en <em>Archivo → Compartir → Publicar en la web</em>.
   </div>
 </div>
@@ -514,7 +514,7 @@ async function cargarDatos() {
   btn.disabled = true;
   btn.textContent = "⟳ Cargando...";
 
-  if (SHEET_ID === "TU_SHEET_ID_AQUI") {
+  if (SHEET_ID === "1BANBTsHb_K2pGf7vWoltoWZVHNg592A1zfJpd6GwPyQ") {
     estado.resoluciones = DEMO_RES;
     estado.consultas = DEMO_CON;
     estado.demo = true;
